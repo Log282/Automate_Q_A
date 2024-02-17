@@ -9,6 +9,9 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.chains.question_answering import load_qa_chain
 from langchain.prompts import PromptTemplate
 from dotenv import load_dotenv
+from deep_translator import GoogleTranslator
+from langdetect import detect
+
 
 load_dotenv()
 os.getenv("GOOGLE_API_KEY")
@@ -55,7 +58,7 @@ def get_conversational_chain():
     return chain
 
 
-def user_input(user_question):
+def user_input(user_question, detected_language):
     embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
 
     new_db = FAISS.load_local("faiss_index", embeddings)
@@ -70,7 +73,11 @@ def user_input(user_question):
     print(response)
     # st.write("Reply: ", response["output_text"])
     st.header("Answer")
-    st.write(response["output_text"])
+    print('detected language', detected_language)
+    print(response["output_text"])
+    translated = GoogleTranslator(source='en', target=detected_language).translate(response["output_text"])  # output -> Weiter so, du bist großartig
+    st.write(translated)
+    print('output in local language',translated)
 
 
 def main():
@@ -80,7 +87,11 @@ def main():
     user_question = st.text_input("")
 
     if user_question:
-        user_input(user_question)
+        detected_language = detect(user_question)
+        translated = GoogleTranslator(source='auto', target='en').translate(user_question)  # output -> Weiter so, du bist großartig
+        print('user question',user_question)
+        print('translated text',translated)
+        user_input(translated,detected_language)
 
     with st.sidebar:
         st.title("Menu:")
